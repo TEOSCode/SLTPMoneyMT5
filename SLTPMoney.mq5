@@ -18,12 +18,9 @@ input color   InpBuyColor      = C'41,98,255';    // Compra (linea, volumen, P/L
 input color   InpSellColor     = C'242,54,69';     // Venta
 input color   InpTPColor       = C'38,166,154';     // Take Profit
 input color   InpSLColor       = C'255,152,0';     // Stop Loss
-input color   InpCloseColor    = C'242,54,69';     // Texto del boton de cerrar/cancelar
-input double  InpPendingLightAmount = 0.35;        // Que tan clara se ve la linea de pendientes (0=color solido igual que la posicion, 1=casi blanca)
-input color   InpBadgeBg       = clrWhite;         // Fondo de cajas informativas (TP/SL/desc)
 
 input group "=== Panel ==="
-input bool    InpPanelRight    = false;   // true = pegado a la derecha, false = a la izquierda
+
 input int     InpPanelMargin   = 6;      // Margen en pixeles desde el borde del grafico
 input int     InpPriceScaleReserve = 78; // Pixeles reservados para no chocar con la escala de precio nativa de MT5 (sube este valor si tu escala se ve mas ancha, ej. simbolos con muchos digitos)
 input int     InpButtonHeight  = 18;     // Alto de las cajas
@@ -32,10 +29,6 @@ input int     InpFontSize      = 8;      // Tamano de fuente
 input group "=== Comportamiento ==="
 input bool    InpOnlyCurrentSymbol = true;
 input ulong   InpMagicFilter       = 0;      // 0 = mostrar todas
-input bool    InpShowReverseButton = true;
-input bool    InpShowCloseButton   = true;
-input int     InpDefaultSLPoints   = 300;    // Distancia del SL fantasma (puntos)
-input int     InpDefaultTPPoints   = 300;    // Distancia del TP fantasma (puntos)
 input int     InpTimerMs           = 200;    // Refresco ligero de P/L (ms)
 
 #define PFX "TM_"
@@ -70,6 +63,13 @@ string NamePendSL(ulong t)      { return PFX+"PDSL_"+(string)t; }
 string NamePendSLBadge(ulong t) { return PFX+"PDSLB_"+(string)t; }
 string NamePendTP(ulong t)      { return PFX+"PDTP_"+(string)t; }
 string NamePendTPBadge(ulong t) { return PFX+"PDTPB_"+(string)t; }
+
+bool InpPanelRight = false;
+double  InpPendingLightAmount = 0.35;        // Que tan clara se ve la linea de pendientes (0=color solido igual que la posicion, 1=casi blanca)
+bool   InpShowReverseButton = false;
+bool   InpShowCloseButton   = false;
+color   InpCloseColor    = C'242,54,69';     // Texto del boton de cerrar/cancelar
+color   InpBadgeBg       = clrWhite;         // Fondo de cajas informativas (TP/SL/desc)
 
 //+------------------------------------------------------------------+
 ulong TicketFromName(const string name)
