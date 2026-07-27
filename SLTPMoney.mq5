@@ -105,7 +105,7 @@ int BoxScreenLeft(int x,int w,ENUM_BASE_CORNER corner){ return (corner==CORNER_L
 int ScreenLeftToX(int screenLeft,int w,ENUM_BASE_CORNER corner){ return (corner==CORNER_LEFT_UPPER)? screenLeft : ChartW()-screenLeft-w; }
 
 int TextPixelWidth(const string t){ return (int)MathCeil(StringLen(t) * (InpFontSize * 0.75));}
-int BoxWidthFor(const string t,int minW=20){ return MathMax(minW,TextPixelWidth(t)+8); }
+int BoxWidthFor(const string t,int minW=20){ return MathMax(minW,TextPixelWidth(t)+24); }
 
 color LightenColor(color c,double amount)
   {
@@ -359,7 +359,7 @@ void SyncPosition(ulong ticket)
      {
      DrawLine(NameSLLine(ticket),sl,InpSLColor,2,STYLE_SOLID,true,"SL");
       string t="SL "+MoneyAtLevel(symbol,isBuy,vol,priceOpen,sl);
-      DrawBadge(NameSLBadge(ticket),t,EffectiveMargin(),PriceToY(sl)-InpButtonHeight/2,BoxWidthFor(t),InpButtonHeight,
+      DrawBadge(NameSLBadge(ticket),t,EffectiveMargin(),PriceToY(sl)-InpButtonHeight/2,BoxWidthFor(t,70),InpButtonHeight,
                 InpSLColor,clrWhite,InpSLColor,corner);
      }
    
@@ -369,7 +369,7 @@ void SyncPosition(ulong ticket)
      {
       DrawLine(NameTPLine(ticket),tp,InpTPColor,2,STYLE_SOLID,true,"TP");
       string t="TP "+MoneyAtLevel(symbol,isBuy,vol,priceOpen,tp);
-      DrawBadge(NameTPBadge(ticket),t,EffectiveMargin(),PriceToY(tp)-InpButtonHeight/2,BoxWidthFor(t),InpButtonHeight,
+      DrawBadge(NameTPBadge(ticket),t,EffectiveMargin(),PriceToY(tp)-InpButtonHeight/2,BoxWidthFor(t,70),InpButtonHeight,
                 InpTPColor,clrWhite,InpTPColor,corner);
      }
   
@@ -405,15 +405,15 @@ void SyncPending(ulong ticket)
    string names[5]; string texts[5]; color bgs[5]; color fgs[5]; color bords[5]; int ws[5]; bool clk[5];
    int n=0;
 
-   if(sl<=0){ names[n]=NamePendSLG(ticket); texts[n]="SL"; bgs[n]=InpBadgeBg; fgs[n]=InpSLColor; bords[n]=InpSLColor; ws[n]=26; clk[n]=false; n++; }
+   if(sl<=0){ names[n]=NamePendSLG(ticket); texts[n]="SL"; bgs[n]=InpBadgeBg; fgs[n]=InpSLColor; bords[n]=InpSLColor; ws[n]=50; clk[n]=false; n++; }
    else DeleteBadge(NamePendSLG(ticket));
 
-   if(tp<=0){ names[n]=NamePendTPG(ticket); texts[n]="TP"; bgs[n]=InpBadgeBg; fgs[n]=InpTPColor; bords[n]=InpTPColor; ws[n]=26; clk[n]=false; n++; }
+   if(tp<=0){ names[n]=NamePendTPG(ticket); texts[n]="TP"; bgs[n]=InpBadgeBg; fgs[n]=InpTPColor; bords[n]=InpTPColor; ws[n]=50; clk[n]=false; n++; }
    else DeleteBadge(NamePendTPG(ticket));
 
-   names[n]=NamePendVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=sideClr; fgs[n]=clrWhite; bords[n]=sideClr; ws[n]=40; clk[n]=false; n++;
+   /*names[n]=NamePendVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=sideClr; fgs[n]=clrWhite; bords[n]=sideClr; ws[n]=40; clk[n]=false; n++;
    names[n]=NamePendDesc(ticket); texts[n]=typeTxt; bgs[n]=sideClr; fgs[n]=clrWhite; bords[n]=sideClr; ws[n]=BoxWidthFor(typeTxt); clk[n]=false; n++;
-   names[n]=NamePendClose(ticket); texts[n]="X"; bgs[n]=InpBadgeBg; fgs[n]=InpCloseColor; bords[n]=InpCloseColor; ws[n]=22; clk[n]=true; n++;
+   names[n]=NamePendClose(ticket); texts[n]="X"; bgs[n]=InpBadgeBg; fgs[n]=InpCloseColor; bords[n]=InpCloseColor; ws[n]=22; clk[n]=true; n++;*/
 
    LayoutRow(names,texts,bgs,fgs,bords,ws,clk,n,y-InpButtonHeight/2,InpButtonHeight,corner,EffectiveMargin());
 
@@ -421,7 +421,7 @@ void SyncPending(ulong ticket)
      {
       DrawLine(NamePendSL(ticket),sl,InpSLColor,1,STYLE_SOLID,true,"Arrastra para mover el SL de la pendiente");
       string t="SL "+MoneyAtLevel(symbol,isBuy,vol,price,sl);
-      DrawBadge(NamePendSLBadge(ticket),t,EffectiveMargin(),PriceToY(sl)-InpButtonHeight/2,BoxWidthFor(t),InpButtonHeight,
+      DrawBadge(NamePendSLBadge(ticket),t,EffectiveMargin(),PriceToY(sl)-InpButtonHeight/2,BoxWidthFor(t,70),InpButtonHeight,
                 InpSLColor,clrWhite,InpSLColor,corner);
      }
  
@@ -430,7 +430,7 @@ void SyncPending(ulong ticket)
      {
       DrawLine(NamePendTP(ticket),tp,InpTPColor,1,STYLE_SOLID,true,"Arrastra para mover el TP de la pendiente");
       string t="TP "+MoneyAtLevel(symbol,isBuy,vol,price,tp);
-      DrawBadge(NamePendTPBadge(ticket),t,EffectiveMargin(),PriceToY(tp)-InpButtonHeight/2,BoxWidthFor(t),InpButtonHeight,
+      DrawBadge(NamePendTPBadge(ticket),t,EffectiveMargin(),PriceToY(tp)-InpButtonHeight/2,BoxWidthFor(t,70),InpButtonHeight,
                 InpTPColor,clrWhite,InpTPColor,corner);
      }
  
