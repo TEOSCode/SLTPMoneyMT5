@@ -344,7 +344,7 @@ void SyncPosition(ulong ticket)
    names[n]=NamePosVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=35; clk[n]=false; n++;
 
    names[n]=NamePosPnl(ticket); texts[n]=(profit>=0?"+":"")+DoubleToString(profit,2)+" "+AccountInfoString(ACCOUNT_CURRENCY);
-   bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=75; clk[n]=false; n++;
+   bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=85; clk[n]=false; n++;
 
    if(InpShowCloseButton)
      {
