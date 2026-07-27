@@ -73,7 +73,6 @@ void OnTradeTransaction(
 )
 {
    UpdatePositions();
-   Print("Actualizado");
    ChartRedraw();
 }
 
