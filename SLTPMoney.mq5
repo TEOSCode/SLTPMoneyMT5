@@ -57,7 +57,7 @@ double ProfitAtPrice(
 int OnInit()
 {
    UpdatePositions();
-   Print("Indicador ejecutándose");
+
    return(INIT_SUCCEEDED);
 }
 
@@ -420,50 +420,36 @@ void UpdatePositions()
 
 void RemoveOldLabels(string &active[])
 {
-   int total =
-      ObjectsTotal(
-         0,
-         0,
-         OBJ_TEXT
-      );
+   int total = ObjectsTotal(0);
 
-
-   for(int i=total-1; i>=0; i--)
+   for(int i = total - 1; i >= 0; i--)
    {
-      string name =
-         ObjectName(
-            0,
-            i,
-            0,
-            OBJ_TEXT
-         );
+      string name = ObjectName(0,i);
 
-
-      if(StringFind(name,PREFIX)!=0)
+      if(StringFind(name,PREFIX) != 0)
          continue;
 
 
-      bool exists=false;
+      bool found = false;
 
 
-      for(int j=0;j<ArraySize(active);j++)
+      for(int j=0; j<ArraySize(active); j++)
       {
-         if(StringFind(name,(string)active[j])>=0)
+         if(name == active[j])
          {
-            exists=true;
+            found = true;
             break;
          }
       }
 
 
-      if(!exists)
+      if(!found)
       {
-         ObjectDelete(
-            0,
-            name
-         );
+         ObjectDelete(0,name);
       }
    }
+
+   ChartRedraw();
 }
 
 
