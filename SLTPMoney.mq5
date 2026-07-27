@@ -341,10 +341,10 @@ void SyncPosition(ulong ticket)
    if(tp<=0){ /*names[n]=NamePosTPG(ticket); texts[n]="TP"; bgs[n]=InpBadgeBg; fgs[n]=InpTPColor; bords[n]=InpTPColor; ws[n]=20; clk[n]=false; n++; */}
    else DeleteBadge(NamePosTPG(ticket));
 
-   names[n]=NamePosVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=35; clk[n]=false; n++;
+   names[n]=NamePosVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=40; clk[n]=false; n++;
 
    names[n]=NamePosPnl(ticket); texts[n]=(profit>=0?"+":"")+DoubleToString(profit,2)+" "+AccountInfoString(ACCOUNT_CURRENCY);
-   bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=85; clk[n]=false; n++;
+   bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=90; clk[n]=false; n++;
 
    if(InpShowCloseButton)
      {
@@ -405,15 +405,15 @@ void SyncPending(ulong ticket)
    string names[5]; string texts[5]; color bgs[5]; color fgs[5]; color bords[5]; int ws[5]; bool clk[5];
    int n=0;
 
-   if(sl<=0){ names[n]=NamePendSLG(ticket); texts[n]="SL"; bgs[n]=InpBadgeBg; fgs[n]=InpSLColor; bords[n]=InpSLColor; ws[n]=20; clk[n]=false; n++; }
+   if(sl<=0){ names[n]=NamePendSLG(ticket); texts[n]="SL"; bgs[n]=InpBadgeBg; fgs[n]=InpSLColor; bords[n]=InpSLColor; ws[n]=26; clk[n]=false; n++; }
    else DeleteBadge(NamePendSLG(ticket));
 
-   if(tp<=0){ names[n]=NamePendTPG(ticket); texts[n]="TP"; bgs[n]=InpBadgeBg; fgs[n]=InpTPColor; bords[n]=InpTPColor; ws[n]=20; clk[n]=false; n++; }
+   if(tp<=0){ names[n]=NamePendTPG(ticket); texts[n]="TP"; bgs[n]=InpBadgeBg; fgs[n]=InpTPColor; bords[n]=InpTPColor; ws[n]=26; clk[n]=false; n++; }
    else DeleteBadge(NamePendTPG(ticket));
 
-   names[n]=NamePendVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=sideClr; fgs[n]=clrWhite; bords[n]=sideClr; ws[n]=35; clk[n]=false; n++;
+   names[n]=NamePendVol(ticket); texts[n]=DoubleToString(vol,2); bgs[n]=sideClr; fgs[n]=clrWhite; bords[n]=sideClr; ws[n]=40; clk[n]=false; n++;
    names[n]=NamePendDesc(ticket); texts[n]=typeTxt; bgs[n]=sideClr; fgs[n]=clrWhite; bords[n]=sideClr; ws[n]=BoxWidthFor(typeTxt); clk[n]=false; n++;
-   names[n]=NamePendClose(ticket); texts[n]="X"; bgs[n]=InpBadgeBg; fgs[n]=InpCloseColor; bords[n]=InpCloseColor; ws[n]=18; clk[n]=true; n++;
+   names[n]=NamePendClose(ticket); texts[n]="X"; bgs[n]=InpBadgeBg; fgs[n]=InpCloseColor; bords[n]=InpCloseColor; ws[n]=22; clk[n]=true; n++;
 
    LayoutRow(names,texts,bgs,fgs,bords,ws,clk,n,y-InpButtonHeight/2,InpButtonHeight,corner,EffectiveMargin());
 
