@@ -14,13 +14,13 @@
 //======================================================
 // Configuración
 //======================================================
-input color SL_Color = C'239,83,80';      // Color SL
-input color TP_Color = C'38,166,154';     // Color TP
+input color   SL_Color       = C'239,83,80';    // Color SL
+input color   TP_Color       = C'38,166,154';   // Color TP
 input int     FontSize       = 8;
-input string  FontName       = "Roboto";
+input string  FontName       = "Arial";
 input int     RefreshMS      = 100;
-input int LabelXOffset = 18;   // Desplazamiento horizontal
-input int LabelYOffset = -7;  // Desplazamiento vertical
+input int     LabelXOffset   = 18;              // Desplazamiento horizontal
+input int     LabelYOffset    = -7;             // Desplazamiento vertical
 
 //======================================================
 // Prefijos
