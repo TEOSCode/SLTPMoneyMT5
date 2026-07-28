@@ -75,6 +75,7 @@ ulong TicketFromName(const string name)
    if(p<0) return 0;
    return (ulong)StringToInteger(StringSubstr(name,p+1));
   }
+  
 
 int PriceToY(double price)
   {
@@ -387,6 +388,7 @@ int OnCalculate(const int32_t rates_total,
                 const int& spread[])
   {
    RefreshLive();
+   FullSync(); 
    return(rates_total);
   }
 
