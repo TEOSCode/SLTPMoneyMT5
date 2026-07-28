@@ -42,7 +42,8 @@ input group "=== Apariencia UI Canvas ==="
 input ENUM_BADGE_ALIGNMENT InpAlignment = BADGE_ALIGN_RIGHT; // Alineación horizontal de badges
 input ENUM_LINE_THICKNESS  InpLineThick = THICK_2;            // Grosor línea horizontal (1, 2 ó 3 px)
 input color   InpBadgeInnerBg  = clrWhite;   // Fondo interior claro para contraste
-input int     InpFontSize      = 16;               // Tamaño de fuente (Arial) para todo el texto
+input int     InpFontSize      = 16;  // Tamaño de fuente
+input string  FontStyle = "Arial";     // Fuente       
 input bool    showRightTriangle = true;
 
 input group "=== Comportamiento ==="
@@ -148,10 +149,10 @@ void DrawPositionBadge(double price, string labelText, uint clrOutline, uint clr
 
    int chartWidth = canvas.Width();
 
-   canvas.FontSet("Arial", InpFontSize, FW_NORMAL);
+   canvas.FontSet(FontStyle, InpFontSize, FW_NORMAL);
 
    int badgeW      = MathMax(10, (InpFontSize * 7)); 
-   int badgeH      = MathMax(3, InpFontSize + 4);  
+   int badgeH      = MathMax(1, InpFontSize + 2);  
    int arrowW      = 10;   
    int borderThick = 1;   
    int cornerRadius= 1; // Radio para esquinas redondeadas
