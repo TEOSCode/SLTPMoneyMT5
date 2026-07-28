@@ -35,8 +35,8 @@ input color   InpBuyColor      = C'41,98,255';    // Compra (linea, volumen, P/L
 input color   InpSellColor     = clrCrimson;     // Venta
 input color   InpTPColor       = C'38,166,154';     // Take Profit
 input color   InpSLColor       = C'255,152,0';     // Stop Loss
-input color   InpProfitFloat   = clrForestGreen;          // Color texto Profit
-input color   InpLossFloat     = clrCrimson;   // Color texto Loss
+input color   InpProfitFloat   = C'38,166,154';          // Color texto Profit
+input color   InpLossFloat     = C'255,152,0';   // Color texto Loss
 
 input group "=== Apariencia UI Canvas ==="
 input ENUM_BADGE_ALIGNMENT InpAlignment = BADGE_ALIGN_RIGHT; // Alineación horizontal de badges
@@ -150,8 +150,8 @@ void DrawPositionBadge(double price, string labelText, uint clrOutline, uint clr
 
    canvas.FontSet("Arial", InpFontSize, FW_BOLD);
 
-   int badgeW      = MathMax(10, (InpFontSize * 6)); 
-   int badgeH      = MathMax(1, InpFontSize + 4);  
+   int badgeW      = MathMax(10, (InpFontSize * 7)); 
+   int badgeH      = MathMax(3, InpFontSize + 4);  
    int arrowW      = 10;   
    int borderThick = 1;   
    int cornerRadius= 1; // Radio para esquinas redondeadas
