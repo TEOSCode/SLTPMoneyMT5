@@ -43,7 +43,7 @@ input ENUM_LINE_WIDTH_OPTION InpLineWidth = WIDTH_MEDIUM; // Grosor de las líne
 
 bool    InpOnlyCurrentSymbol = true;
 ulong   InpMagicFilter       = 0;      // 0 = mostrar todas
-int     InpTimerMs           = 200;    // Refresco ligero de P/L (ms)
+
 
 #define PFX "TM_"
 #define TM_ZORDER 2147483647
@@ -358,7 +358,6 @@ void RefreshLive()
 //+------------------------------------------------------------------+
 int OnInit()
   { 
-   EventSetMillisecondTimer(InpTimerMs); 
    FullSync(); 
    SetIndexBuffer(0, IndBuffer, INDICATOR_DATA);
    return(INIT_SUCCEEDED); 
