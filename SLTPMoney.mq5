@@ -11,83 +11,199 @@
 #property indicator_buffers 0
 #property indicator_plots 0
 
-#include <Canvas\Canvas.mqh>
-
-//--- Opciones de alineación horizontal para los badges
-enum ENUM_BADGE_ALIGNMENT
-{
-   BADGE_ALIGN_LEFT,    // Alineados a la izquierda
-   BADGE_ALIGN_CENTER,  // Alineados al centro del gráfico
-   BADGE_ALIGN_RIGHT    // Alineados a la derecha (cerca del precio)
-};
-
-//--- Opciones de grosor para las líneas horizontales
-enum ENUM_LINE_THICKNESS
-{
-   THICK_1 = 1, // 1 píxel (Fina)
-   THICK_2 = 2, // 2 píxeles (Media)
-   THICK_3 = 3  // 3 píxeles (Gruesa)
-};
 
 //================== INPUTS ==================
 input group "=== Colores (sistema propio, no depende del tema de MT5) ==="
 input color   InpBuyColor      = C'41,98,255';    // Compra (linea, volumen, P/L, reversa)
-input color   InpSellColor     = clrCrimson;     // Venta
-input color   InpTPColor       = C'38,166,154';     // Take Profit
-input color   InpSLColor       = C'255,152,0';     // Stop Loss
-input color   InpProfitFloat   = C'38,166,154';          // Color texto Profit
-input color   InpLossFloat     = C'255,152,0';   // Color texto Loss
+input color   InpSellColor     = clrCrimson;      // Venta
+input color   InpTPColor       = C'38,166,154';   // Take Profit
+input color   InpSLColor       = C'255,152,0';    // Stop Loss
+input color   InpProfitFloat   = C'38,166,154';   // Color texto Profit
+input color   InpLossFloat     = clrCrimson;      // Color texto Loss
+input color   InpBGColor       = clrWhite;        // Color Fondo Badges
 
-input group "=== Apariencia UI Canvas ==="
-input ENUM_BADGE_ALIGNMENT InpAlignment = BADGE_ALIGN_RIGHT; // Alineación horizontal de badges
-input ENUM_LINE_THICKNESS  InpLineThick = THICK_2;            // Grosor línea horizontal (1, 2 ó 3 px)
-input color   InpBadgeInnerBg  = clrWhite;   // Fondo interior claro para contraste
-input int     InpFontSize      = 16;  // Tamaño de fuente
-input string  FontStyle = "Arial";     // Fuente       
-input bool    showRightTriangle = true;
+input group "=== Badges ==="
+input bool   InpPanelRight          = true;      // true = derecha : false = izquierda
+input int    InpPanelMargin         = 6;         // Margen Pixeles borde izquierdo
+input int    InpPriceScaleReserve   = 0;         // Margen Pixeles borde derecho
+input int    InpButtonHeight        = 20;        // Alto de las cajas
+input int    InpFontSize            = 8;         // Tamano de fuente
+input string fontStyle              = "Cabin";   // Fuente del texto
 
-input group "=== Comportamiento ==="
-input bool    InpOnlyCurrentSymbol = true;
-input ulong   InpMagicFilter       = 0;      // 0 = mostrar todas
-input int     InpTimerMs           = 200;    // Refresco ligero de P/L (ms)
+// Enums para opciones de grosor
+enum ENUM_LINE_WIDTH_OPTION
+  {
+   WIDTH_THIN   = 1, // Delgada (1 px)
+   WIDTH_MEDIUM = 2, // Mediana (2 px)
+   WIDTH_THICK  = 3  // Gruesa (3 px)
+  };
+
+input group "=== Apariencia de Líneas ==="
+input ENUM_LINE_WIDTH_OPTION InpLineWidth = WIDTH_MEDIUM; // Grosor de las líneas horizontales
+
+bool    InpOnlyCurrentSymbol = true;
+ulong   InpMagicFilter       = 0;      // 0 = mostrar todas
+int     InpTimerMs           = 200;    // Refresco ligero de P/L (ms)
 
 #define PFX "TM_"
-#define COLOR_TEXT_WHITE 0xFFFFFFFF
+#define TM_ZORDER 2147483647
 
 double IndBuffer[];
-CCanvas canvas;
+
+//================== NOMBRES BASE ==================
+string NamePosLine(ulong t)  { return PFX+"POSLN_"+(string)t; }
+string NamePosRev(ulong t)   { return PFX+"POSRV_"+(string)t; }
+string NamePosSLG(ulong t)   { return PFX+"POSSLG_"+(string)t; }
+string NamePosTPG(ulong t)   { return PFX+"POSTPG_"+(string)t; }
+string NamePosVol(ulong t)   { return PFX+"POSVOL_"+(string)t; }
+string NamePosPnl(ulong t)   { return PFX+"POSPNL_"+(string)t; }
+string NamePosClose(ulong t) { return PFX+"POSCL_"+(string)t; }
+
+string NameSLLine(ulong t)   { return PFX+"SLLN_"+(string)t; }
+string NameSLBadge(ulong t)  { return PFX+"SLBD_"+(string)t; }
+string NameTPLine(ulong t)   { return PFX+"TPLN_"+(string)t; }
+string NameTPBadge(ulong t)  { return PFX+"TPBD_"+(string)t; }
+
+bool   InpShowReverseButton = false;
+bool   InpShowCloseButton   = false;
 
 //+------------------------------------------------------------------+
-//| Convertidor de color MQL5 a ARGB opaco                           |
-//+------------------------------------------------------------------+
-uint ToARGB(color clr, uchar alpha=255)
-{
-   return ((uint)alpha << 24) | ((uint)(clr & 0xFF) << 16) | ((uint)((clr >> 8) & 0xFF) << 8) | (uint)((clr >> 16) & 0xFF);
-}
+ulong TicketFromName(const string name)
+  {
+   int p = StringFind(name,"_");
+   p = StringFind(name,"_",p+1);
+   if(p<0) return 0;
+   return (ulong)StringToInteger(StringSubstr(name,p+1));
+  }
+
+int PriceToY(double price)
+  {
+   double pmax = ChartGetDouble(0,CHART_PRICE_MAX,0);
+   double pmin = ChartGetDouble(0,CHART_PRICE_MIN,0);
+   int    h    = (int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS,0);
+   if(pmax<=pmin || h<=0) return 0;
+   return (int)((pmax-price)/(pmax-pmin)*h);
+  }
+
+int ChartW(){ return (int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS,0); }
+
+int EffectiveMargin(){ return InpPanelRight ? InpPanelMargin+InpPriceScaleReserve : InpPanelMargin; }
+
+int TextPixelWidth(const string t){ return (int)MathCeil(StringLen(t) * (InpFontSize * 0.75));}
+int BoxWidthFor(const string t,int minW=20){ return MathMax(minW,TextPixelWidth(t)+16); }
+
+void DeleteObj(const string name){ if(ObjectFind(0,name)>=0) ObjectDelete(0,name); }
 
 //+------------------------------------------------------------------+
-//| Función auxiliar para dibujar rectángulos con bordes redondeados  |
+//| COMPONENTE: Linea horizontal estática                             |
 //+------------------------------------------------------------------+
-void DrawRoundedRect(int x1, int y1, int x2, int y2, int r, uint clr)
-{
-   if(r <= 0)
-   {
-      canvas.FillRectangle(x1, y1, x2, y2, clr);
-      return;
-   }
+void DrawLine(const string name,double price,color clr,int width,ENUM_LINE_STYLE style,string tooltip)
+  {
+   if(ObjectFind(0,name)<0)
+     {
+      ObjectCreate(0,name,OBJ_HLINE,0,0,price);
+      ObjectSetInteger(0,name,OBJPROP_BACK,false);
+      ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
+     }
+   ObjectSetInteger(0,name,OBJPROP_BACK,false);
+   ObjectSetInteger(0,name,OBJPROP_ZORDER,TM_ZORDER+5); // Se dibuja sobre los badges
+   ObjectSetDouble(0,name,OBJPROP_PRICE,price);
+   ObjectSetInteger(0,name,OBJPROP_COLOR,clr);
+   ObjectSetInteger(0,name,OBJPROP_WIDTH,width);
+   ObjectSetInteger(0,name,OBJPROP_STYLE,style);
+   ObjectSetInteger(0,name,OBJPROP_SELECTABLE,false); // Bloqueada para no arrastrar
+   ObjectSetInteger(0,name,OBJPROP_SELECTED,false);
+   ObjectSetString(0,name,OBJPROP_TOOLTIP,tooltip);
+  }
 
-   int width = MathAbs(x2 - x1);
-   int height = MathAbs(y2 - y1);
-   r = MathMin(r, MathMin(width / 2, height / 2));
+//+------------------------------------------------------------------+
+//| COMPONENTE: Caja plana (OBJ_RECTANGLE_LABEL)                      |
+//+------------------------------------------------------------------+
+void DrawBox(const string name, int screenX, int y, int w, int h, color bg, color border)
+  {
+   if(ObjectFind(0, name) < 0)
+     {
+      ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, name, OBJPROP_BACK, false);
+      ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
+      ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, name, OBJPROP_WIDTH, 1);
+     }
+   ObjectSetInteger(0, name, OBJPROP_BACK, false);
+   ObjectSetInteger(0, name, OBJPROP_ZORDER, TM_ZORDER);
+   ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+   ObjectSetInteger(0, name, OBJPROP_XDISTANCE, screenX);
+   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y-1);
+   ObjectSetInteger(0, name, OBJPROP_XSIZE, w);
+   ObjectSetInteger(0, name, OBJPROP_YSIZE, h);
+   ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
+   ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+   ObjectSetInteger(0, name, OBJPROP_COLOR, border);
+  }
 
-   canvas.FillRectangle(x1 + r, y1, x2 - r, y2, clr);
-   canvas.FillRectangle(x1, y1 + r, x2, y2 - r, clr);
+//+------------------------------------------------------------------+
+//| COMPONENTE: Texto (OBJ_LABEL) superpuesto                         |
+//+------------------------------------------------------------------+
+void DrawLabelIn(const string name, const string text, color fg, int boxScreenX, int boxY, int boxW, int boxH)
+  {
+   if(ObjectFind(0, name) < 0)
+     {
+      ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, name, OBJPROP_BACK, false);
+      ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
+      ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
+      ObjectSetString(0, name, OBJPROP_FONT, fontStyle);
+     }
+   
+   int pad = 5;
+   int labelX = boxScreenX + pad;
+   int labelY = boxY + MathMax(0, (boxH - (InpFontSize + 4)) / 2);
 
-   canvas.FillCircle(x1 + r, y1 + r, r, clr);
-   canvas.FillCircle(x2 - r, y1 + r, r, clr);
-   canvas.FillCircle(x1 + r, y2 - r, r, clr);
-   canvas.FillCircle(x2 - r, y2 - r, r, clr);
-}
+   ObjectSetInteger(0, name, OBJPROP_BACK, false);
+   ObjectSetInteger(0, name, OBJPROP_ZORDER, TM_ZORDER+10);
+   ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+   ObjectSetInteger(0, name, OBJPROP_XDISTANCE, labelX);
+   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, labelY-1);
+   ObjectSetInteger(0, name, OBJPROP_FONTSIZE, InpFontSize);
+   ObjectSetInteger(0, name, OBJPROP_COLOR, fg);
+   ObjectSetString(0, name, OBJPROP_TEXT, text);
+  }
+
+//+------------------------------------------------------------------+
+//| COMPONENTE: Badge = Caja + Texto                                  |
+//+------------------------------------------------------------------+
+void DrawBadge(const string baseName, const string text, int screenX, int y, int w, int h,
+               color bg, color fg, color border)
+  {
+   DrawBox(baseName + "B", screenX, y, w, h, bg, border);
+   DrawLabelIn(baseName + "L", text, fg, screenX, y, w, h);
+  }
+
+void DeleteBadge(const string baseName){ DeleteObj(baseName+"B"); DeleteObj(baseName+"L"); }
+
+//+------------------------------------------------------------------+
+//| Fila de badges pegados unos a otros                               |
+//+------------------------------------------------------------------+
+void LayoutRow(string &names[], string &texts[], color &bgs[], color &fgs[], color &borders[],
+                int &widths[], int n, int y, int h, int marginFromEdge)
+  {
+   if(n <= 0) return;
+
+   int totalRowWidth = 0;
+   for(int i = 0; i < n; i++) totalRowWidth += widths[i];
+
+   int currentX = 0;
+   if(InpPanelRight)
+      currentX = ChartW() - marginFromEdge - totalRowWidth;
+   else
+      currentX = marginFromEdge;
+
+   for(int i = 0; i < n; i++)
+     {
+      DrawBadge(names[i], texts[i], currentX, y, widths[i], h, bgs[i], fgs[i], borders[i]);
+      currentX += widths[i];
+     }
+  }
 
 //+------------------------------------------------------------------+
 //| Dinero (no precio) que representa un nivel de SL o TP             |
@@ -138,97 +254,10 @@ string MoneyAtLevel(string symbol, bool isBuy, double volume, double priceRef, d
 }
 
 //+------------------------------------------------------------------+
-//| Función de Renderizado Visual del Badge con CCanvas              |
-//+------------------------------------------------------------------+
-void DrawPositionBadge(double price, string labelText, uint clrOutline, uint clrInnerBg, uint clrText, ENUM_BADGE_ALIGNMENT alignMode, string leftBoxText = "")
-{
-   int xDummy, y;
-
-   if(!ChartTimePriceToXY(0, 0, TimeCurrent(), price, xDummy, y))
-      return;
-
-   int chartWidth = canvas.Width();
-
-   canvas.FontSet(FontStyle, InpFontSize, FW_NORMAL);
-
-   int badgeW      = MathMax(10, (InpFontSize * 7)); 
-   int badgeH      = MathMax(1, InpFontSize + 2);  
-   int arrowW      = 10;   
-   int borderThick = 1;   
-   int cornerRadius= 1; // Radio para esquinas redondeadas
-
-   int bx = 0;
-   switch(alignMode)
-   {
-      case BADGE_ALIGN_LEFT:   bx = 75; break;
-      case BADGE_ALIGN_CENTER: bx = (chartWidth / 2) - (badgeW / 2); break;
-      case BADGE_ALIGN_RIGHT:  bx = chartWidth - badgeW - arrowW - 5; break;
-   }
-
-   // Badge posicionado por encima de la línea del precio
-   int by = y - badgeH;
-
-   // --- Recuadro a la Izquierda (Lotaje/Volumen) ---
-   if(StringLen(leftBoxText) > 0)
-   {
-      int boxW = MathMax(28, (InpFontSize * 3));
-
-      DrawRoundedRect(bx - boxW, by, bx - 1, by + badgeH, cornerRadius, clrOutline);
-
-      int w, h;
-      canvas.TextSize(leftBoxText, w, h);
-      canvas.TextOut(bx - boxW + (boxW - w) / 2, by + (badgeH - h) / 2, leftBoxText, COLOR_TEXT_WHITE);
-   }
-
-   // 1. Marco Exterior Redondeado (Outline)
-   DrawRoundedRect(bx, by, bx + badgeW, by + badgeH, cornerRadius, clrOutline);
-
-   // 2. Flecha a la derecha
-   if(showRightTriangle){
-      int px[3];
-      int py[3];
-   
-      px[0] = bx + badgeW;          py[0] = by + 2;
-      px[1] = bx + badgeW + arrowW; py[1] = y;
-      px[2] = bx + badgeW;          py[2] = by + badgeH;
-   
-      canvas.FillTriangle(px[0], py[0], px[1], py[1], px[2], py[2], clrOutline);
-   }
-  
-   // 3. Línea horizontal constante hacia el borde derecho con grosor configurable (1, 2 ó 3)
-   // Dibuja un bloque horizontal sólido, eliminando el halo negro del anti-aliasing
-   int thick = (int)InpLineThick;
-   int yStart = y - (thick / 2);
-   
-   for(int i = 0; i < thick; i++)
-   {
-      canvas.LineHorizontal(0, chartWidth, yStart + i, clrOutline);
-   }
-
-   // 4. Recuadro Interior Redondeado
-   int innerX1 = bx + borderThick;
-   int innerY1 = by + borderThick;
-   int innerX2 = bx + badgeW - borderThick;
-   int innerY2 = by + badgeH - borderThick;
-
-   int innerRadius = MathMax(1, cornerRadius - borderThick);
-   DrawRoundedRect(innerX1, innerY1, innerX2, innerY2, innerRadius, clrInnerBg);
-
-   // 5. Texto principal centrado
-   int textWidth, textHeight;
-   canvas.TextSize(labelText, textWidth, textHeight);
-
-   int textX = innerX1 + ((innerX2 - innerX1) - textWidth) / 2;
-   int textY = innerY1 + ((innerY2 - innerY1) - textHeight) / 2;
-
-   canvas.TextOut(textX, textY, labelText, clrText);
-}
-
-//+------------------------------------------------------------------+
-//| RECONSTRUCCION Y DIBUJADO DE POSICIONES ACTIVAS                  |
+//| RECONSTRUCCION COMPLETA de una POSICION                           |
 //+------------------------------------------------------------------+
 void SyncPosition(ulong ticket)
-{
+  {
    if(!PositionSelectByTicket(ticket)) return;
    string symbol   = PositionGetString(POSITION_SYMBOL);
    bool   isBuy    = (PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY);
@@ -236,142 +265,115 @@ void SyncPosition(ulong ticket)
    double sl       = PositionGetDouble(POSITION_SL);
    double tp       = PositionGetDouble(POSITION_TP);
    double vol      = PositionGetDouble(POSITION_VOLUME);
-   double profit   = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
-   
-   uint outlineClr = isBuy ? ToARGB(InpBuyColor) : ToARGB(InpSellColor);
-   uint innerBgClr = ToARGB(InpBadgeInnerBg);
-   uint textClr    = (profit >= 0.0) ? ToARGB(InpProfitFloat) : ToARGB(InpLossFloat);
+   double profit   = PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP);
+   color  lineClr  = isBuy ? InpBuyColor : InpSellColor;
 
-   string volTxt = DoubleToString(vol, 2);
-   string pnlTxt = (profit >= 0.0 ? "+" : "") + DoubleToString(profit, 2);
+   DrawLine(NamePosLine(ticket),priceOpen,lineClr,(int)InpLineWidth,STYLE_SOLID,(isBuy?"COMPRA ":"VENTA ")+DoubleToString(vol,2));
+   int yLine = PriceToY(priceOpen);
 
-   DrawPositionBadge(priceOpen, pnlTxt, outlineClr, innerBgClr, textClr, InpAlignment, volTxt);
+   string names[6]; string texts[6]; color bgs[6]; color fgs[6]; color bords[6]; int ws[6];
+   int n=0;
 
-   if(sl > 0)
-   {
-      uint slOutlineClr = ToARGB(InpSLColor);
-      string slTxt = MoneyAtLevel(symbol, isBuy, vol, priceOpen, sl);
-      DrawPositionBadge(sl, slTxt, slOutlineClr, innerBgClr, slOutlineClr, InpAlignment);
-   }
+   if(!InpShowReverseButton) DeleteBadge(NamePosRev(ticket));
+   if(sl>0) DeleteBadge(NamePosSLG(ticket));
+   if(tp>0) DeleteBadge(NamePosTPG(ticket));
 
-   if(tp > 0)
-   {
-      uint tpOutlineClr = ToARGB(InpTPColor);
-      string tpTxt = MoneyAtLevel(symbol, isBuy, vol, priceOpen, tp);
-      DrawPositionBadge(tp, tpTxt, tpOutlineClr, innerBgClr, tpOutlineClr, InpAlignment);
-   }
-}
+   // 1. Lotaje
+   string volTxt = DoubleToString(vol,2);
+   names[n]=NamePosVol(ticket); texts[n]=volTxt; bgs[n]=lineClr; fgs[n]=clrWhite; bords[n]=lineClr; ws[n]=BoxWidthFor(volTxt,32); n++;
 
-//+------------------------------------------------------------------+
-//| RECONSTRUCCION Y DIBUJADO DE ORDENES PENDIENTES                  |
-//+------------------------------------------------------------------+
-void SyncPending(ulong ticket)
-{
-   if(!OrderSelect(ticket)) return;
-   string symbol = OrderGetString(ORDER_SYMBOL);
-   long   type   = OrderGetInteger(ORDER_TYPE);
-   double price  = OrderGetDouble(ORDER_PRICE_OPEN);
-   double sl     = OrderGetDouble(ORDER_SL);
-   double tp     = OrderGetDouble(ORDER_TP);
-   double vol    = OrderGetDouble(ORDER_VOLUME_CURRENT);
-   bool   isBuy  = (type==ORDER_TYPE_BUY_LIMIT || type==ORDER_TYPE_BUY_STOP || type==ORDER_TYPE_BUY_STOP_LIMIT);
-   
-   uint outlineClr = isBuy ? ToARGB(InpBuyColor) : ToARGB(InpSellColor);
-   uint innerBgClr = ToARGB(InpBadgeInnerBg);
+   // 2. Beneficio con color condicional
+   string pnlTxt = (profit>=0?"+":" ")+DoubleToString(profit,2)+" "+AccountInfoString(ACCOUNT_CURRENCY);
+   color pnlTxtColor = (profit >= 0.0) ? InpProfitFloat : InpLossFloat;
 
-   string volTxt = DoubleToString(vol, 2);
+   names[n]=NamePosPnl(ticket); texts[n]=pnlTxt; bgs[n]=InpBGColor; fgs[n]=pnlTxtColor; bords[n]=lineClr; ws[n]=BoxWidthFor(pnlTxt,60); n++;
 
-   DrawPositionBadge(price, "PEND", outlineClr, innerBgClr, outlineClr, InpAlignment, volTxt);
+   if(!InpShowCloseButton) DeleteBadge(NamePosClose(ticket));
 
-   if(sl > 0)
-   {
-      uint slOutlineClr = ToARGB(InpSLColor);
-      string slTxt = MoneyAtLevel(symbol, isBuy, vol, price, sl);
-      DrawPositionBadge(sl, slTxt, slOutlineClr, innerBgClr, slOutlineClr, InpAlignment);
-   }
+   // Ubicamos la fila encima de la línea
+   LayoutRow(names,texts,bgs,fgs,bords,ws,n,yLine - InpButtonHeight,InpButtonHeight,EffectiveMargin());
 
-   if(tp > 0)
-   {
-      uint tpOutlineClr = ToARGB(InpTPColor);
-      string tpTxt = MoneyAtLevel(symbol, isBuy, vol, price, tp);
-      DrawPositionBadge(tp, tpTxt, tpOutlineClr, innerBgClr, tpOutlineClr, InpAlignment);
-   }
-}
+   // ---- SL activo ----
+   if(sl>0)
+     {
+      DrawLine(NameSLLine(ticket),sl,InpSLColor,(int)InpLineWidth,STYLE_SOLID,"SL");
+      string t=MoneyAtLevel(symbol,isBuy,vol,priceOpen,sl);
+      int w = BoxWidthFor(t);
+      int posX = InpPanelRight ? (ChartW() - EffectiveMargin() - w) : EffectiveMargin();
+      DrawBadge(NameSLBadge(ticket),t,posX,PriceToY(sl) - InpButtonHeight,w,InpButtonHeight,
+                InpBGColor,InpSLColor,InpSLColor);
+     }
+
+   // ---- TP activo ----
+   if(tp>0)
+     {
+      DrawLine(NameTPLine(ticket),tp,InpTPColor,(int)InpLineWidth,STYLE_SOLID,"TP");
+      string t=MoneyAtLevel(symbol,isBuy,vol,priceOpen,tp);
+      int w = BoxWidthFor(t);
+      int posX = InpPanelRight ? (ChartW() - EffectiveMargin() - w) : EffectiveMargin();
+      DrawBadge(NameTPBadge(ticket),t,posX,PriceToY(tp) - InpButtonHeight,w,InpButtonHeight,
+                InpBGColor,InpTPColor,InpTPColor);
+     }
+  }
+
 
 //+------------------------------------------------------------------+
-//| Sincronización general y renderizado en Canvas                    |
+ulong g_livePos[];
+bool InArray(ulong &arr[],ulong v){ for(int i=0;i<ArraySize(arr);i++) if(arr[i]==v) return true; return false; }
+
 //+------------------------------------------------------------------+
 void FullSync()
-{
-   int width  = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS);
-   int height = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
+  {
+   ArrayResize(g_livePos,0);
 
-   if(width <= 0 || height <= 0) return;
-
-   if(canvas.Width() != width || canvas.Height() != height)
-      canvas.Resize(width, height);
-
-   canvas.Erase(0x00000000);
-
-   for(int i = 0; i < PositionsTotal(); i++)
-   {
+   for(int i=0;i<PositionsTotal();i++)
+     {
       ulong ticket = PositionGetTicket(i);
       if(!PositionSelectByTicket(ticket)) continue;
-      if(InpOnlyCurrentSymbol && PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
-      if(InpMagicFilter != 0 && (ulong)PositionGetInteger(POSITION_MAGIC) != InpMagicFilter) continue;
-      
+      if(InpOnlyCurrentSymbol && PositionGetString(POSITION_SYMBOL)!=_Symbol) continue;
+      if(InpMagicFilter!=0 && (ulong)PositionGetInteger(POSITION_MAGIC)!=InpMagicFilter) continue;
+      int n=ArraySize(g_livePos); ArrayResize(g_livePos,n+1); g_livePos[n]=ticket;
       SyncPosition(ticket);
-   }
+     }
 
-   for(int i = 0; i < OrdersTotal(); i++)
-   {
-      ulong ticket = OrderGetTicket(i);
-      if(!OrderSelect(ticket)) continue;
-      if(InpOnlyCurrentSymbol && OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
-      if(InpMagicFilter != 0 && (ulong)OrderGetInteger(ORDER_MAGIC) != InpMagicFilter) continue;
-      
-      SyncPending(ticket);
-   }
-
-   canvas.Update();
-}
+   int total = ObjectsTotal(0,0,-1);
+   for(int i=total-1;i>=0;i--)
+     {
+      string name = ObjectName(0,i,0,-1);
+      if(StringFind(name,PFX)!=0) continue;
+      ulong ticket = TicketFromName(name);
+      if(!InArray(g_livePos,ticket)) ObjectDelete(0,name);
+     }
+   ChartRedraw(0);
+  }
 
 //+------------------------------------------------------------------+
-//| EVENTOS DEL INDICADOR                                            |
+void RefreshLive()
+  {
+   for(int i=0;i<ArraySize(g_livePos);i++) SyncPosition(g_livePos[i]);
+   ChartRedraw(0);
+  }
+
 //+------------------------------------------------------------------+
 int OnInit()
-{ 
-   int width  = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS);
-   int height = (int)ChartGetInteger(0, CHART_HEIGHT_IN_PIXELS);
-
-   if(width <= 0 || height <= 0)
-   {
-      width  = 800;
-      height = 600;
-   }
-
-   if(!canvas.CreateBitmapLabel(0, 0, "SLTPMoneyCanvas", 0, 0, width, height, COLOR_FORMAT_ARGB_NORMALIZE))
-   {
-      Print("Error al crear el Canvas para SLTPMoney");
-      return(INIT_FAILED);
-   }
-
-   string objName = canvas.ChartObjectName();
-   ObjectSetInteger(0, objName, OBJPROP_BACK, false);
-   ObjectSetInteger(0, objName, OBJPROP_ZORDER, 2147483647);
-
+  { 
    EventSetMillisecondTimer(InpTimerMs); 
-   SetIndexBuffer(0, IndBuffer, INDICATOR_DATA);
    FullSync(); 
+   SetIndexBuffer(0, IndBuffer, INDICATOR_DATA);
    return(INIT_SUCCEEDED); 
-}
+  }
 
 void OnDeinit(const int reason)
-{
+  {
    EventKillTimer();
-   canvas.Destroy();
+   int total = ObjectsTotal(0,0,-1);
+   for(int i=total-1;i>=0;i--)
+     {
+      string name = ObjectName(0,i,0,-1);
+      if(StringFind(name,PFX)==0) ObjectDelete(0,name);
+     }
    ChartRedraw(0);
-}
+  }
 
 int OnCalculate(const int32_t rates_total,
                 const int32_t prev_calculated,
@@ -383,21 +385,13 @@ int OnCalculate(const int32_t rates_total,
                 const long& tick_volume[],
                 const long& volume[],
                 const int& spread[])
-{
-   FullSync();
+  {
+   RefreshLive();
    return(rates_total);
-}
+  }
 
-void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest &request, const MqlTradeResult &result)
-{
+void OnTradeTransaction(const MqlTradeTransaction &trans,const MqlTradeRequest &request,const MqlTradeResult &result)
+  {
    FullSync();
-}
-
-void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
-{
-   if(id == CHARTEVENT_CHART_CHANGE)
-   {
-      FullSync();
-   }
-}
+  }
 //+------------------------------------------------------------------+
