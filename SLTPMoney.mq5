@@ -159,7 +159,7 @@ void DrawPositionBadge(double price, string labelText, uint clrOutline, uint clr
    int bx = 0;
    switch(alignMode)
    {
-      case BADGE_ALIGN_LEFT:   bx = 40; break;
+      case BADGE_ALIGN_LEFT:   bx = 75; break;
       case BADGE_ALIGN_CENTER: bx = (chartWidth / 2) - (badgeW / 2); break;
       case BADGE_ALIGN_RIGHT:  bx = chartWidth - badgeW - arrowW - 5; break;
    }
