@@ -13,14 +13,14 @@
 
 
 //================== INPUTS ==================
-input group "=== Colores (sistema propio, no depende del tema de MT5) ==="
-input color   InpBuyColor      = C'41,98,255';    // Compra (linea, volumen, P/L, reversa)
-input color   InpSellColor     = clrCrimson;      // Venta
-input color   InpTPColor       = C'38,166,154';   // Take Profit
-input color   InpSLColor       = C'255,152,0';    // Stop Loss
+input group "=== Colores ==="
+input color   InpBuyColor      = C'41,98,255';    // Color Linea/Badge Compra
+input color   InpSellColor     = clrCrimson;      // Color Linea/Badge Venta
+input color   InpTPColor       = C'38,166,154';   // Color Linea/Badge Take Profit
+input color   InpSLColor       = C'255,152,0';    // Color Linea/Badge Stop Loss
+input color   InpBGColor       = clrWhite;        // Color Fondo Badges
 input color   InpProfitFloat   = C'38,166,154';   // Color texto Profit
 input color   InpLossFloat     = clrCrimson;      // Color texto Loss
-input color   InpBGColor       = clrWhite;        // Color Fondo Badges
 
 input group "=== Badges ==="
 input bool   InpPanelRight          = true;      // true = derecha : false = izquierda
@@ -38,7 +38,7 @@ enum ENUM_LINE_WIDTH_OPTION
    WIDTH_THICK  = 3  // Gruesa (3 px)
   };
 
-input group "=== Apariencia de Líneas ==="
+input group "=== Grosor de Líneas ==="
 input ENUM_LINE_WIDTH_OPTION InpLineWidth = WIDTH_MEDIUM; // Grosor de las líneas horizontales
 
 bool    InpOnlyCurrentSymbol = true;
