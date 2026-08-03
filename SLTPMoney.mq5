@@ -28,7 +28,7 @@ input int    InpPanelMargin         = 6;         // Margen Pixeles borde izquier
 input int    InpPriceScaleReserve   = 0;         // Margen Pixeles borde derecho
 input int    InpButtonHeight        = 20;        // Alto de las cajas
 input int    InpFontSize            = 8;         // Tamano de fuente
-input string fontStyle              = "Cabin";   // Fuente del texto
+input string fontStyle              = "Segoe UI Semibold";   // Fuente del texto
 
 // Enums para opciones de grosor
 enum ENUM_LINE_WIDTH_OPTION
@@ -90,8 +90,8 @@ int ChartW(){ return (int)ChartGetInteger(0,CHART_WIDTH_IN_PIXELS,0); }
 
 int EffectiveMargin(){ return InpPanelRight ? InpPanelMargin+InpPriceScaleReserve : InpPanelMargin; }
 
-int TextPixelWidth(const string t){ return (int)MathCeil(StringLen(t) * (InpFontSize * 0.75));}
-int BoxWidthFor(const string t,int minW=20){ return MathMax(minW,TextPixelWidth(t)+16); }
+int TextPixelWidth(const string t){ return (int)MathCeil(StringLen(t) * (InpFontSize * 0.70));}
+int BoxWidthFor(const string t,int minW=75){ return MathMax(minW,TextPixelWidth(t)+16); }
 
 void DeleteObj(const string name){ if(ObjectFind(0,name)>=0) ObjectDelete(0,name); }
 
@@ -134,7 +134,7 @@ void DrawBox(const string name, int screenX, int y, int w, int h, color bg, colo
    ObjectSetInteger(0, name, OBJPROP_ZORDER, TM_ZORDER);
    ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, screenX);
-   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y-1);
+   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
    ObjectSetInteger(0, name, OBJPROP_XSIZE, w);
    ObjectSetInteger(0, name, OBJPROP_YSIZE, h);
    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
@@ -164,10 +164,11 @@ void DrawLabelIn(const string name, const string text, color fg, int boxScreenX,
    ObjectSetInteger(0, name, OBJPROP_ZORDER, TM_ZORDER+10);
    ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, labelX);
-   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, labelY-1);
+   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, labelY);
    ObjectSetInteger(0, name, OBJPROP_FONTSIZE, InpFontSize);
    ObjectSetInteger(0, name, OBJPROP_COLOR, fg);
    ObjectSetString(0, name, OBJPROP_TEXT, text);
+   ObjectSetString(0, name, OBJPROP_FONT, fontStyle);
   }
 
 //+------------------------------------------------------------------+
